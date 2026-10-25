@@ -201,8 +201,9 @@ Zotero.ItemSaver._createServerAttachmentItem = async function(attachment) {
 	return response.success[0];
 },
 
-Zotero.ItemSaver._fetchAttachment = async function(attachment, tab, attemptBotProtectionBypass=true) {
+Zotero.ItemSaver._fetchAttachment = async function(attachment, tab, attemptBotProtectionBypass=true, maxSize) {
 	let options = { responseType: "arraybuffer", timeout: 60000, successCodes: false };
+	if (maxSize) options.maxSize = maxSize;
 	let cookies;
 	try {
 		cookies = await Zotero.Connector_Browser.getAllCookies({
