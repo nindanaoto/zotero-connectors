@@ -8,6 +8,7 @@ const source = await fs.readFile(new URL('../../src/common/android/bridge.js', i
 function harness({failPDF = false, storageMode = 'webdav'} = {}) {
     const storage = {};
     const requests = [];
+    const openedTabs = [];
     const saves = new Map();
     const tab = {id: 7, url: 'https://www-nature-com.kyoto-u.idm.oclc.org/articles/example'};
     const pdf = new TextEncoder().encode('%PDF-1.7\nfixture').buffer;
@@ -20,7 +21,7 @@ function harness({failPDF = false, storageMode = 'webdav'} = {}) {
             remove: async key => { delete storage[key]; },
         }},
         runtime: {id: 'test-extension', getURL: path => `moz-extension://test/${path}`, onMessage: {addListener: value => { listener = value; }}},
-        tabs: {get: async () => tab, query: async () => [tab], sendMessage: async (_id, message) => {
+        tabs: {create: async options => openedTabs.push(options), get: async () => tab, query: async () => [tab], sendMessage: async (_id, message) => {
             if (message.kind === 'android-fetch-pdf') return {error: 'Login required'};
             return {item: {itemType: 'journalArticle', title: 'Paper', url: 'https://www.nature.com/articles/example'},
                 attachments: [{id: 'pdf-0', title: 'Article PDF', mimeType: 'application/pdf',
@@ -68,12 +69,24 @@ function harness({failPDF = false, storageMode = 'webdav'} = {}) {
         }};
     vm.runInNewContext(source, context);
     return {
-        storage, requests, saves, setFailing(value) { failing = value; },
+        storage, requests, saves, openedTabs, setFailing(value) { failing = value; },
+        openPanel: tab => Zotero.AndroidBridge.openPanel(tab),
         async init() { await Zotero.AndroidBridge.init(); },
         async call(action, extra = {}) { return listener({kind: 'android-panel', action, ...extra}, {id: 'test-extension', url: browser.runtime.getURL('android/panel.html')}); },
         untrusted() { return listener({kind: 'android-panel', action: 'link'}, {tab, url: tab.url}); },
     };
 }
+
+test('opening the panel in a regular tab preserves the article for app switching and saving', async () => {
+    const h = harness();
+    const article = {id: 7, url: 'https://example.org/paper'};
+    await h.openPanel(article);
+    assert.equal(h.storage.androidPendingTab.tabId, article.id);
+    assert.equal(h.storage.androidPendingTab.sourceURL, article.url);
+    assert.equal(h.openedTabs[0].url, 'moz-extension://test/android/panel.html');
+    await h.openPanel({id: 8, url: h.openedTabs[0].url});
+    assert.equal(h.storage.androidPendingTab.tabId, article.id);
+});
 
 test('pairing link contains a challenge, not a reusable credential; web content cannot request it', async () => {
     const h = harness(); await h.init();

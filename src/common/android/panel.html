@@ -9,16 +9,15 @@
 <body>
     <h1>Save to Zotero</h1>
     <p id="connection" role="status">Connecting to Zotero…</p>
-    <a id="launch" href="#" target="_blank" hidden>Open Zotero</a>
+    <a id="launch" href="#" hidden>Open Zotero</a>
     <button id="repair" type="button" hidden>Pair again</button>
     <label for="collection">Collection</label>
     <select id="collection"><option value="">My Library</option></select>
     <button id="save" type="button" disabled>Save paper / retry PDF</button>
-    <button id="new" type="button">Start a new save</button>
+    <button id="new" type="button" hidden>Reset previous save</button>
     <p id="progress" role="status" aria-live="polite"></p>
     <ul id="attachments"></ul>
     <p id="error" role="alert"></p>
-    <a id="proxy" href="#" hidden>Open article through Kyoto proxy</a>
     <script src="panel.js"></script>
 </body>
 </html>
