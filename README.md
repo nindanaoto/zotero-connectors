@@ -98,6 +98,10 @@ reuses the existing item. **Reset previous save** clears the current attempt;
 tap **Save paper** afterwards to create a separate save. Collection changes apply
 to new saves, not an existing retry.
 
+For a new save, the collection defaults to the personal-library collection currently
+open in Zotero Debug. You can choose another collection before saving. Special views
+and group libraries default to My Library; PDF retries keep the original destination.
+
 If a PDF download is blocked by browser verification, select **Open PDF in Firefox**
 under the failed attachment, complete any verification or sign-in, then return to
 the Connector and select **Retry PDF / check sync**. This keeps the existing item.
