@@ -691,6 +691,7 @@ Zotero.Connector_Browser = new function() {
 	 * Update status and tooltip of Zotero button
 	 */
 	this._updateExtensionUI = async function (tab) {
+		if (Zotero.isAndroid) return;
 		if (!tab) {
 			tab = await getCurrentTab();
 		}
@@ -1140,6 +1141,7 @@ Zotero.Connector_Browser = new function() {
 	}
 
 	async function _browserAction(tab) {
+		if (Zotero.isAndroid) return;
 		const shouldContinue = await Zotero.HostPermissions.checkChromiumActionPermissions(tab);
 		if (!shouldContinue) {
 			return;

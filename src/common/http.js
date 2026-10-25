@@ -571,6 +571,14 @@ Zotero.HTTP = new function() {
 	 */
 	this._attachHandlers = function(url, xmlhttp, options) {
 		var deferred = Zotero.Promise.defer();
+		if (options.maxSize) {
+			xmlhttp.onprogress = event => {
+				if (event.loaded > options.maxSize || (event.lengthComputable && event.total > options.maxSize)) {
+					deferred.reject(new Error('Response exceeds the configured size limit'));
+					xmlhttp.abort();
+				}
+			};
+		}
 		xmlhttp.onload = () => deferred.resolve(xmlhttp);
 		xmlhttp.onerror = xmlhttp.onabort = function() {
 			var e = new Zotero.HTTP.StatusError(xmlhttp, url, ['', 'text'].includes(xmlhttp.responseType) ? xmlhttp.responseText : undefined);

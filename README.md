@@ -56,6 +56,82 @@ in the browser being developed for.
 
 * Copy `config.sh-sample` to `config.sh` and modify as necessary
 
+## Android Connector and WebDAV
+
+The Android build saves through the companion Zotero Android fork. Firefox extracts
+metadata and downloads PDFs using the current browser session, including Kyoto
+University's EZproxy. The Android app stores the paper locally, syncs metadata to
+Zotero, and uploads PDFs through its configured WebDAV account.
+
+Build the companion app's `devDebug` variant, sign in, and enable and verify WebDAV.
+The debug app installs alongside the official app as `org.zotero.android.debug`.
+Then build this extension (Firefox Android 142 or later):
+
+```sh
+npm install
+npm run build:android
+```
+
+The extension is in `build/firefox-android`. It has a distinct extension ID and
+does not use Zotero's upstream extension update URL. For development, load it into
+Firefox Android over USB with `web-ext run --target firefox-android`. For normal
+installation, sign the build as an **unlisted** Firefox extension using your Mozilla
+developer account, then install the signed XPI using Firefox's Install add-on from
+file option. Building or running tests does not sign or publish the extension.
+
+### First save
+
+1. In Firefox, permit opening links in native apps (Ask before opening is sufficient).
+2. Open an individual article through your university proxy and sign in normally.
+3. Open the Android Connector from Firefox's Extensions menu and select **Open Zotero**.
+4. Approve pairing in the companion app. Allow notifications to expose its receiving
+   notification and Stop action. Return to Firefox if Android does not return automatically.
+5. Reopen the Connector, choose a collection, and save. A pending save may resume
+   automatically after returning to Firefox; its progress is retained in the panel.
+
+The panel can open a publisher article through Kyoto's proxy. The equivalent
+bookmarklet is:
+
+```javascript
+javascript:void(location.href='https://kyoto-u.idm.oclc.org/login?url='+encodeURIComponent(location.href));
+```
+
+University cookies remain in Firefox. The app receives canonical metadata and PDF
+bytes, not your university credentials. A PDF failure leaves the metadata saved;
+sign in again and use **Save paper / retry PDF**. Retry refreshes download URLs and
+reuses the existing item. **Start a new save** intentionally creates a separate
+save attempt. Collection changes apply to new saves, not an existing retry.
+
+The receiver listens only on `127.0.0.1:23119` and stops after five idle minutes.
+Use **Open Zotero** to restart it. Revoke pairing from the app's **Settings → Browser
+saving** screen; use **Pair again** in Firefox afterwards. Pairing is also invalidated
+on logout. PDF uploads pause if WebDAV is disabled; this path does not fall back to
+Zotero Storage.
+
+Version one supports a single paper and up to 20 PDF attachments of at most 100 MiB
+each, in the personal library. Batch saves, snapshots, EPUBs, standalone PDF metadata
+recognition, and group libraries are outside this build's save workflow. Zotero's
+normal desktop builds retain their existing save behavior.
+
+### Validation
+
+```sh
+npm run test:android
+npx puppeteer browsers install firefox
+npm run test:android:firefox
+npx web-ext lint --source-dir build/firefox-android
+```
+
+The Firefox smoke test uses a local article, a real Embedded Metadata translator,
+an HttpOnly login cookie, and a mock local app receiver. Device acceptance must
+also check Kyoto login, cold/warm app launch, notification denial, interrupted
+transfers, and downloading the resulting PDF on desktop Zotero via WebDAV.
+
+The mobile manifest declares website content and browsing activity transmission:
+the user-requested paper and its URL are transferred to the local companion app.
+Translator execution retains the upstream eval-based architecture and its related
+Firefox lint warnings.
+
 # Developing
 
 An overview of the Zotero Connector architecture.

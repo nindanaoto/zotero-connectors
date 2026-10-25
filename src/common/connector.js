@@ -158,6 +158,9 @@ Zotero.Connector = new function() {
 	 * @param {Function} callback - Function to be called when requests complete.
 	 */
 	this.callMethod = async function(options, data = null, tab = null) {
+		if (Zotero.isAndroid) {
+			throw new Zotero.Connector.CommunicationError('Use the Android bridge for mobile saves');
+		}
 		if (typeof options == 'string') {
 			options = {method: options};
 		}

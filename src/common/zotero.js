@@ -51,6 +51,7 @@ var Zotero = global.Zotero = new function() {
 	// http://stackoverflow.com/questions/9847580/how-to-detect-safari-chrome-ie-firefox-and-opera-browser
 	/* this.isFirefox = SET IN BUILD SCRIPT */;
 	/* this.isSafari = SET IN BUILD SCRIPT */;
+	this.isAndroid = this.isFirefox && browser.runtime.getManifest().browser_specific_settings?.gecko_android != null;
 
 	this.isChrome = this.isEdge = false;
 	if (!this.isFirefox && !this.isSafari) {
@@ -204,19 +205,23 @@ var Zotero = global.Zotero = new function() {
 		if (storingDebugOnRestart) Zotero.Debug.setStore(storingDebugOnRestart);
 		Zotero.Prefs.set('debug.store', false);
 		Zotero.WebRequestIntercept.init();
-		Zotero.ContentTypeHandler.init();
+		if (!Zotero.isAndroid) Zotero.ContentTypeHandler.init();
 		await Zotero.Connector_Browser.init();
 		await Zotero.i18n.init();
 		Zotero.Translators.init();
 		await Zotero.Proxies.init();
+		if (Zotero.isAndroid) {
+			Zotero.Prefs.set('firstUse', false);
+			await Zotero.AndroidBridge.init();
+		}
 		await this._initDateFormatsJSON();
 		Zotero.initDeferred.resolve();
-		if (Zotero.GoogleDocs.API.init) {
+		if (!Zotero.isAndroid && Zotero.GoogleDocs.API.init) {
 			await Zotero.GoogleDocs.API.init();
 		}
 		Zotero.initialized = true;
 
-		await Zotero.migrate();
+		if (!Zotero.isAndroid) await Zotero.migrate();
 
 		// Flush any previously-failed server-side API key revocation.
 		// Fire-and-forget: a network failure here just means we try again on

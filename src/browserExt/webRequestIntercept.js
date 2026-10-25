@@ -193,6 +193,10 @@ Zotero.WebRequestIntercept = {
 				initiatorDomains: [new URL(browser.runtime.getURL('')).hostname],
 			}
 		}];
+		if (Zotero.isAndroid) {
+			// A proxy cookie/header override must not apply to concurrent bridge or repo requests.
+			rules[0].condition.regexFilter = '^' + Zotero.Utilities.quotemeta(url) + '$';
+		}
 		// Keep the service worker alive while the rule is active
 		Zotero.Connector_Browser.setKeepServiceWorkerAlive(true);
 		try {

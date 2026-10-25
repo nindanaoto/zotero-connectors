@@ -1,0 +1,9 @@
+:root { color-scheme: light dark; font: 16px system-ui, sans-serif; }
+body { width: min(330px, 85vw); margin: 18px; }
+h1 { font-size: 1.2rem; }
+label { display: block; margin-top: 18px; }
+select, button { box-sizing: border-box; width: 100%; padding: 10px; margin: 6px 0; font: inherit; }
+a { display: block; padding: 10px 0; }
+[hidden] { display: none; }
+#error { color: light-dark(#a00000, #ffaaaa); }
+li { margin-block: 6px; }

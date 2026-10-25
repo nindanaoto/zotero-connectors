@@ -30,6 +30,9 @@
     "yargs": "^6.0.0"
   },
   "scripts": {
+    "build:android": "./build.sh && node scripts/build-android.mjs",
+    "test:android": "node --test test/android/*.test.mjs",
+    "test:android:firefox": "node test/android/firefox-smoke.mjs",
     "test": "mocha",
     "update-single-file": "scripts/update-single-file"
   }
