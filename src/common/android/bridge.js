@@ -174,7 +174,9 @@ Zotero.AndroidBridge = new function() {
         if (tab && /^https?:/.test(tab.url)) {
             await store('androidPendingTab', {tabId: tab.id, sourceURL: tab.url});
         }
-        await browser.tabs.create({url: browser.runtime.getURL('android/panel.html')});
+        const pending = await load('androidPendingTab');
+        const parameters = pending ? `?tabId=${pending.tabId}` : '';
+        await browser.tabs.create({url: browser.runtime.getURL('android/panel.html') + parameters});
     };
 
     this.init = async function() {
@@ -203,11 +205,17 @@ Zotero.AndroidBridge = new function() {
                         }
                         case 'resume': await store('androidResume', Date.now()); break;
                         case 'state': {
-                            const job = await load('androidJob');
+                            let job = await load('androidJob');
+                            const pending = await load('androidPendingTab');
+                            const source = message.tabId == null ? pending : await browser.tabs.get(message.tabId).catch(() => null);
+                            const sourceURL = source?.url || source?.sourceURL;
+                            // A saved receipt locks only its own article's collection. Keep it
+                            // available for retry, but don't show it in another article's panel.
+                            if (job && sourceURL && properURL(job.sourceURL) !== properURL(sourceURL)) job = null;
                             if (job && !busy && job.receipt) {
                                 try { job.receipt = await request(`/saves/${job.saveId}`); await saveJob(job); } catch (_) {}
                             }
-                            data = {busy, job, pending: await load('androidPendingTab'), collectionKey: await load('androidCollection')}; break;
+                            data = {busy, job, pending, collectionKey: await load('androidCollection')}; break;
                         }
                         case 'collection': await store('androidCollection', message.collectionKey); break;
                         case 'new': if (busy) throw new Error('Wait for the current save to finish.'); await browser.storage.local.remove('androidJob'); current = null; break;
