@@ -83,24 +83,24 @@ file option. Building or running tests does not sign or publish the extension.
 
 1. In Firefox, permit opening links in native apps (Ask before opening is sufficient).
 2. Open an individual article through your university proxy and sign in normally.
-3. Open the Android Connector from Firefox's Extensions menu and select **Open Zotero**.
+3. Open the Android Connector from Firefox's Extensions menu. Its panel opens in a
+   regular tab so Firefox can launch native apps. Select **Open Zotero** and confirm
+   opening Zotero Debug when Firefox asks.
 4. Approve pairing in the companion app. Allow notifications to expose its receiving
    notification and Stop action. Return to Firefox if Android does not return automatically.
 5. Reopen the Connector, choose a collection, and save. A pending save may resume
    automatically after returning to Firefox; its progress is retained in the panel.
 
-The panel can open a publisher article through Kyoto's proxy. The equivalent
-bookmarklet is:
-
-```javascript
-javascript:void(location.href='https://kyoto-u.idm.oclc.org/login?url='+encodeURIComponent(location.href));
-```
-
 University cookies remain in Firefox. The app receives canonical metadata and PDF
 bytes, not your university credentials. A PDF failure leaves the metadata saved;
-sign in again and use **Save paper / retry PDF**. Retry refreshes download URLs and
-reuses the existing item. **Start a new save** intentionally creates a separate
-save attempt. Collection changes apply to new saves, not an existing retry.
+sign in again and use **Retry PDF / check sync**. Retry refreshes download URLs and
+reuses the existing item. **Reset previous save** clears the current attempt;
+tap **Save paper** afterwards to create a separate save. Collection changes apply
+to new saves, not an existing retry.
+
+If a PDF download is blocked by browser verification, select **Open PDF in Firefox**
+under the failed attachment, complete any verification or sign-in, then return to
+the Connector and select **Retry PDF / check sync**. This keeps the existing item.
 
 The receiver listens only on `127.0.0.1:23119` and stops after five idle minutes.
 Use **Open Zotero** to restart it. Revoke pairing from the app's **Settings → Browser

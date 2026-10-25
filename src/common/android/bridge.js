@@ -170,6 +170,13 @@ Zotero.AndroidBridge = new function() {
         } finally { busy = false; }
     }
 
+    this.openPanel = async function(tab) {
+        if (tab && /^https?:/.test(tab.url)) {
+            await store('androidPendingTab', {tabId: tab.id, sourceURL: tab.url});
+        }
+        await browser.tabs.create({url: browser.runtime.getURL('android/panel.html')});
+    };
+
     this.init = async function() {
         const scheme = 'https://%h.kyoto-u.idm.oclc.org/%p';
         if (!Zotero.Proxies.proxies.some(proxy => proxy.toProperScheme === scheme)) {

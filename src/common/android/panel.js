@@ -3,6 +3,7 @@ const $ = id => document.getElementById(id);
 let sourceId;
 let populated = false;
 let updating = false;
+let resetNotice = false;
 async function call(action, args = {}) {
     const result = await browser.runtime.sendMessage({kind: 'android-panel', action, ...args});
     if (!result?.ok) throw new Error(result?.error || 'The Connector is starting. Reopen this panel.');
@@ -23,17 +24,33 @@ async function refresh() {
         sourceId ??= state.pending?.tabId;
         const job = state.job;
         if (!state.busy && (job?.error || job?.receipt?.syncError)) $('error').textContent = job.error || job.receipt.syncError;
-        $('progress').textContent = job?.stage || 'Ready to save an individual article and its PDFs.';
+        $('progress').textContent = job?.stage || (resetNotice
+            ? 'Previous save cleared. Tap Save paper to start a new save.'
+            : 'Choose a collection, then tap Save paper to save the article and its PDFs.');
         $('attachments').replaceChildren();
         for (const entry of job?.receipt?.attachments || []) {
             const row = document.createElement('li');
             row.textContent = entry.webdavUploaded ? 'PDF synced to WebDAV' : entry.received ? 'PDF saved locally; sync pending' : 'PDF missing; retry after signing into the proxy';
+            if (!entry.received) {
+                const pdf = job.pdfs?.find(pdf => pdf.id === entry.id);
+                if (pdf?.fetchURL && /^https?:\/\//i.test(pdf.fetchURL)) {
+                    row.textContent = 'PDF not downloaded. Open it in Firefox, complete any verification or sign-in, then return here and retry.';
+                    const link = document.createElement('a');
+                    link.href = pdf.fetchURL;
+                    link.target = '_blank';
+                    link.rel = 'noopener noreferrer';
+                    link.textContent = 'Open PDF in Firefox';
+                    row.append(link);
+                }
+            }
             $('attachments').append(row);
         }
         if (job?.receipt?.metadataSynced && !state.busy) $('progress').textContent = 'Metadata synced. ' + (job.receipt.attachments.length ? '' : 'No PDF was found on this page.');
         $('save').disabled = state.busy || !sourceId;
+        $('save').textContent = job?.receipt ? 'Retry PDF / check sync' : 'Save paper';
         $('collection').disabled = state.busy || !!job?.receipt;
         $('new').disabled = state.busy;
+        $('new').hidden = !job;
         try {
             await call('connect');
             $('connection').textContent = 'Connected to Zotero · WebDAV';
@@ -76,6 +93,7 @@ $('repair').addEventListener('click', async () => {
 });
 $('collection').addEventListener('change', () => call('collection', {collectionKey: $('collection').value}).catch(error => { $('error').textContent = error.message; }));
 $('save').addEventListener('click', async () => {
+    resetNotice = false;
     $('error').textContent = '';
     $('save').disabled = true;
     try { await call('connect'); }
@@ -91,7 +109,7 @@ $('save').addEventListener('click', async () => {
     await refresh();
 });
 $('new').addEventListener('click', async () => {
-    try { await call('new'); $('error').textContent = ''; await refresh(); }
+    try { await call('new'); resetNotice = true; $('error').textContent = ''; await refresh(); }
     catch (error) { $('error').textContent = error.message; }
 });
 (async () => {
@@ -99,11 +117,6 @@ $('new').addEventListener('click', async () => {
     if (tab && /^https?:/.test(tab.url)) {
         sourceId = tab.id;
         await call('prepare', {tabId: tab.id});
-        const url = new URL(tab.url);
-        if (url.hostname !== 'kyoto-u.idm.oclc.org' && !url.hostname.endsWith('.kyoto-u.idm.oclc.org')) {
-            $('proxy').href = `https://kyoto-u.idm.oclc.org/login?url=${encodeURIComponent(tab.url)}`;
-            $('proxy').hidden = false;
-        }
     }
     await refresh();
     setInterval(refresh, 2000);

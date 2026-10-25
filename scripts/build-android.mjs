@@ -10,7 +10,9 @@ await fs.cp(path.join(root, 'build/firefox'), target, {recursive: true});
 const manifestPath = path.join(target, 'manifest.json');
 const manifest = JSON.parse((await fs.readFile(manifestPath, 'utf8')).replace(/^\uFEFF/, ''));
 manifest.name = 'Zotero Android Connector';
-manifest.browser_action.default_popup = 'android/panel.html';
+// Native app links are ignored inside Firefox Android's extension popup.
+// The action opens the panel in a regular tab instead.
+delete manifest.browser_action.default_popup;
 manifest.background.scripts.splice(manifest.background.scripts.indexOf('background.js'), 0, 'android/bridge.js');
 manifest.content_scripts = [manifest.content_scripts[0]];
 manifest.content_scripts[0].js.push('android/content.js');

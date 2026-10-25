@@ -1149,6 +1149,7 @@ Zotero.Connector_Browser = new function() {
 	}
 
 	async function _browserAction(tab) {
+		if (Zotero.AndroidBridge) return Zotero.AndroidBridge.openPanel(tab);
 		if (Zotero.isAndroid) return;
 		const shouldContinue = await Zotero.HostPermissions.checkChromiumActionPermissions(tab);
 		if (!shouldContinue) {
