@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 const $ = id => document.getElementById(id);
-let sourceId;
+const sourceParameter = new URL(location.href).searchParams.get('tabId');
+let sourceId = sourceParameter && /^\d+$/.test(sourceParameter) ? Number(sourceParameter) : undefined;
 let populated = false;
 let updating = false;
 let resetNotice = false;
@@ -14,7 +15,7 @@ async function refresh() {
     if (updating) return;
     updating = true;
     try {
-        const state = await call('state');
+        const state = await call('state', {tabId: sourceId});
         if (!populated && state.collectionKey && !$('collection').querySelector('option[data-remembered]')) {
             const remembered = document.createElement('option');
             remembered.value = state.collectionKey; remembered.textContent = 'Last collection (connect to view)';

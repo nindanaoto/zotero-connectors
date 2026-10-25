@@ -83,7 +83,7 @@ test('opening the panel in a regular tab preserves the article for app switching
     await h.openPanel(article);
     assert.equal(h.storage.androidPendingTab.tabId, article.id);
     assert.equal(h.storage.androidPendingTab.sourceURL, article.url);
-    assert.equal(h.openedTabs[0].url, 'moz-extension://test/android/panel.html');
+    assert.equal(h.openedTabs[0].url, 'moz-extension://test/android/panel.html?tabId=7');
     await h.openPanel({id: 8, url: h.openedTabs[0].url});
     assert.equal(h.storage.androidPendingTab.tabId, article.id);
 });
@@ -118,6 +118,19 @@ test('proxy PDF failure keeps metadata and retry reuses the same item and attach
     assert.equal(metadata[0].options.body, metadata[1].options.body);
     assert.ok(!metadata[0].options.body.includes('kyoto-u.idm.oclc.org'));
     assert.equal(JSON.parse(metadata[0].options.body).collectionKey, 'COLLECT1');
+});
+
+test('another article has no locked receipt while the original article keeps its retry', async () => {
+    const h = harness({failPDF: true}); await h.init();
+    const saved = await h.call('save', {tabId: 7, collectionKey: 'COLLECT1'});
+    await h.openPanel({id: 8, url: 'https://example.org/another-paper'});
+    const other = await h.call('state');
+    assert.equal(other.data.job, null);
+    assert.equal(h.storage.androidJob.saveId, saved.data.saveId);
+    const original = await h.call('state', {tabId: 7});
+    assert.equal(original.data.job.saveId, saved.data.saveId);
+    assert.ok(original.data.job.receipt);
+    assert.equal(h.saves.size, 1);
 });
 
 test('disabled WebDAV never accepts metadata or falls back to online-library storage', async () => {
