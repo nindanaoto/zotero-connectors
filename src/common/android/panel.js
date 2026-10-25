@@ -53,7 +53,7 @@ async function refresh() {
         $('new').disabled = state.busy;
         $('new').hidden = !job;
         try {
-            await call('connect');
+            const status = await call('connect');
             $('connection').textContent = 'Connected to Zotero · WebDAV';
             $('launch').hidden = true;
             $('repair').hidden = true;
@@ -62,20 +62,14 @@ async function refresh() {
                 $('collection').replaceChildren();
                 const root = document.createElement('option'); root.value = ''; root.textContent = 'My Library';
                 $('collection').append(root);
-                const byKey = new Map(collections.map(entry => [entry.key, entry]));
-                for (const entry of collections) {
-                    const ancestors = [];
-                    let parent = entry.parentKey;
-                    const seen = new Set([entry.key]);
-                    while (parent && byKey.has(parent) && !seen.has(parent)) {
-                        seen.add(parent); ancestors.unshift(byKey.get(parent).name); parent = byKey.get(parent).parentKey;
-                    }
+                for (const {entry, label} of orderAndroidCollections(collections)) {
                     const option = document.createElement('option');
-                    option.value = entry.key; option.textContent = [...ancestors, entry.name].join(' / ');
+                    option.value = entry.key; option.textContent = label;
                     $('collection').append(option);
                 }
-                $('collection').value = state.collectionKey || '';
+                $('collection').value = defaultAndroidCollection(state, status);
                 if (!$('collection').value) $('collection').value = '';
+                await call('collection', {collectionKey: $('collection').value});
                 populated = true;
             }
         } catch (_) {
